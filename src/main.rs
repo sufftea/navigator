@@ -1,16 +1,13 @@
 use std::{
-    io::{BufRead, BufReader, Read, Stdin, Write, stdout},
+    io::{BufRead, BufReader, Write},
     process::{Command, Stdio},
-    u64,
 };
 
 use clap::Parser;
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    // #[arg()]
     root_dir: String,
 }
 
@@ -34,13 +31,7 @@ fn main() {
             .arg(format!("{depth}"))
             .arg("-maxdepth")
             .arg(format!("{depth}"))
-            .arg("(")
-            .arg("-type")
-            .arg("d")
-            .arg("-o")
-            .arg("-type")
-            .arg("l")
-            .arg(")")
+            .args(["(", "-type", "d", "-o", "-type", "l", ")"])
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
@@ -52,22 +43,18 @@ fn main() {
             let mut dir = String::new();
             find_reader.read_line(&mut dir).unwrap();
 
-            if fzf.try_wait().unwrap().is_some() {
-                let output = fzf.wait_with_output().unwrap();
+            let write_result = fzf_input.write_all(dir.as_bytes());
 
+            if fzf.try_wait().unwrap().is_some() || write_result.is_err() {
+                let output = fzf.wait_with_output().unwrap();
                 println!("{}", String::from_utf8(output.stdout).unwrap());
                 find.kill().unwrap();
                 break 'outer;
             }
 
-            fzf_input.write_all(dir.as_bytes()).unwrap();
-
             if find.try_wait().unwrap().is_some() {
                 break;
             }
         }
-
-        // find.kill().unwrap();
-        // find.wait().unwrap();
     }
 }
