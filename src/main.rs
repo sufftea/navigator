@@ -23,16 +23,20 @@ fn main() {
 
     let mut fzf_input = fzf.stdin.take().unwrap();
 
-    // find dir -mindepth $i -maxdepth $i -follow \( -type d -o -type l \)
     'outer: for depth in 0..u32::MAX {
         let mut find = Command::new("find")
-            .arg(args.root_dir.clone())
-            .arg("-mindepth")
-            .arg(format!("{depth}"))
-            .arg("-maxdepth")
-            .arg(format!("{depth}"))
-            .args(["(", "-type", "d", "-o", "-type", "l", ")"])
+            .args([
+                "-L".into(),
+                args.root_dir.clone(),
+                "-mindepth".into(),
+                format!("{depth}"),
+                "-maxdepth".into(),
+                format!("{depth}"),
+                "-type".into(),
+                "d".into(),
+            ])
             .stdout(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()
             .unwrap();
 
